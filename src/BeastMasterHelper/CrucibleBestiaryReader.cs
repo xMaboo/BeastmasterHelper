@@ -117,22 +117,35 @@ internal static class CrucibleBestiaryReader {
 	}
 	public unsafe static int? ViewedRank() {
 		AtkUnitBase* ptr=Unit();
-		if(ptr==null||258>=ptr->AtkValuesCount) {
+		if(ptr==null) {
 			return null;
 		}
-		AtkValue atkValue=ptr->AtkValues[258];
-		AtkValueType atkValueType=atkValue.Type&AtkValueType.TypeMask;
-		if((atkValueType==AtkValueType.String||atkValueType==AtkValueType.ConstString||atkValueType==AtkValueType.ManagedString)?true:false) {
-			if(!int.TryParse(atkValue.String.ToString(),out var result)) {
-				return null;
+		// Try multiple atkValue indices for rank, since game patches may shift the layout
+		// Beast rank values are typically 1-50, so validate the result is in a sane range
+		for(int idx=250; idx<=270; idx++) {
+			if(idx>=ptr->AtkValuesCount) {
+				continue;
 			}
-			return result;
+			AtkValue atkValue=ptr->AtkValues[idx];
+			AtkValueType atkValueType=atkValue.Type&AtkValueType.TypeMask;
+			int? result=null;
+			if((atkValueType==AtkValueType.String||atkValueType==AtkValueType.ConstString||atkValueType==AtkValueType.ManagedString)?true:false) {
+				if(int.TryParse(atkValue.String.ToString(),out var parsed)) {
+					result=parsed;
+				}
+			}
+			else {
+				result=atkValueType switch {
+					AtkValueType.Int => (int?)atkValue.Int,
+					AtkValueType.UInt => (int)atkValue.UInt,
+					_ => null,
+				};
+			}
+			if(result.HasValue && result.Value>=1 && result.Value<=50) {
+				return result;
+			}
 		}
-		return atkValueType switch {
-			AtkValueType.Int => (int?)atkValue.Int,
-			AtkValueType.UInt => (int)atkValue.UInt,
-			_ => null,
-		};
+		return null;
 	}
 	public unsafe static int? ViewedExpPercent() {
 		AtkUnitBase* ptr=Unit();
@@ -182,10 +195,21 @@ internal static class CrucibleBestiaryReader {
 	}
 	public unsafe static uint? ViewedMonsterId() {
 		AtkUnitBase* ptr=Unit();
-		if(ptr==null||231>=ptr->AtkValuesCount) {
+		if(ptr==null) {
 			return null;
 		}
-		return Number(ptr,231);
+		// Try multiple atkValue indices for monster ID, since game patches may shift the layout
+		// Monster IDs for familiars are in range 242001-242050
+		for(int idx=225; idx<=240; idx++) {
+			if(idx>=ptr->AtkValuesCount) {
+				continue;
+			}
+			uint? val=Number(ptr,idx);
+			if(val.HasValue && val.Value>=242001 && val.Value<=242050) {
+				return val;
+			}
+		}
+		return null;
 	}
 	public unsafe static int? ViewedEntry() {
 		AtkUnitBase* ptr=Unit();
