@@ -26,94 +26,49 @@ jobs:
       - name: Read and increment version
         shell: pwsh
         run: |
-          $versionFile = "version.txt"
-          $current = Get-Content $versionFile
-          $parts = $current -split '.'
-          $major = $parts[0]
-          $minor = $parts[1]
-          $patch = $parts[2]
-          $build = [int]$parts[3] + 1
-          $newVersion = "$major.$minor.$patch.$build"
-          Set-Content -Path $versionFile -Value $newVersion
-          echo "VERSION=$newVersion" >> $env:GITHUB_ENV
-          echo "New version: $newVersion"
+          $vf = "version.txt"
+          $cur = Get-Content $vf
+          $p = $cur -split '\.'
+          $p[3] = [int]$p[3] + 1
+          $nv = $p -join '.'
+          Set-Content -Path $vf -Value $nv
+          echo "NEWVER=$nv" >> $env:GITHUB_ENV
 
-      - name: Generate version.props
+      - name: Create version.props
         shell: pwsh
         run: |
-          Set-Content -Path version.props -Value "<Project>"
-          Add-Content -Path version.props -Value "  <PropertyGroup>"
-          Add-Content -Path version.props -Value "    <Version>$env:VERSION</Version>"
-          Add-Content -Path version.props -Value "    <AssemblyVersion>$env:VERSION</AssemblyVersion>"
-          Add-Content -Path version.props -Value "    <FileVersion>$env:VERSION</FileVersion>"
-          Add-Content -Path version.props -Value "    <InformationalVersion>$env:VERSION</InformationalVersion>"
-          Add-Content -Path version.props -Value "  </PropertyGroup>"
-          Add-Content -Path version.props -Value "</Project>"
-          Get-Content version.props
+          "<Project>`n  <PropertyGroup>`n    <Version>$env:NEWVER</Version>`n    <AssemblyVersion>$env:NEWVER</AssemblyVersion>`n  </PropertyGroup>`n</Project>" | Set-Content -Path version.props
 
       - name: Build plugin
         shell: pwsh
         run: |
-          dotnet build src/BeastMasterHelper/BeastMasterHelper.csproj -c Release `
-            -p:ContinuousIntegrationBuild=true `
-            --nologo -v quiet
+          dotnet build src/BeastMasterHelper/BeastMasterHelper.csproj -c Release --nologo -v quiet
 
-      - name: Strip PDBs from packaged zip
+      - name: Strip PDBs from zip
         shell: pwsh
         run: |
-          $zipPath = Join-Path (Resolve-Path 'src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper') 'latest.zip'
-          if (-not (Test-Path $zipPath)) {
-            Write-Error "Packaged zip not found at $zipPath"
-            exit 1
-          }
-          $tmpPath = $zipPath + '.tmp'
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $archive = [System.IO.Compression.ZipFile]::Open($zipPath, 'Update')
-          try {
-            $toRemove = @()
-            foreach ($entry in $archive.Entries) {
-              if ($entry.Name -like '*.pdb') {
-                $toRemove += $entry.FullName
-              }
-            }
-            foreach ($name in $toRemove) {
-              $archive.GetEntry($name).Delete()
-              Write-Host "Removed PDB: $name"
-            }
-          } finally {
-            $archive.Dispose()
-          }
-          Write-Host "PDBs stripped from $zipPath"
+          $zp = Join-Path (Resolve-Path 'src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper') 'latest.zip'
+          $at = [System.IO.Compression.ZipFile]::Open($zp, 'Update')
+          foreach ($e in $at.Entries) { if ($e.Name -like '*.pdb') { $e.Delete() } }
+          $at.Dispose()
 
-      - name: Copy packaged zip to plugins folder
+      - name: Copy zip to plugins folder
         shell: pwsh
         run: |
-          $src = Join-Path (Resolve-Path 'src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper') 'latest.zip'
-          $dest = Join-Path (Resolve-Path 'plugins/BeastMasterHelper') 'BeastMasterHelper.zip'
-          Copy-Item -Path $src -Destination $dest -Force
-          Write-Host "Zip copied to plugins/BeastMasterHelper/BeastMasterHelper.zip"
+          Copy-Item "src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper/latest.zip" "plugins/BeastMasterHelper/BeastMasterHelper.zip" -Force
 
-      - name: Update repo.json with new version
+      - name: Update repo.json
         shell: pwsh
         run: |
-          $repoJson = Get-Content -Path repo.json -Raw | ConvertFrom-Json
-          foreach ($plugin in $repoJson) {
-            if ($plugin.InternalName -eq 'BeastMasterHelper') {
-              $plugin.AssemblyVersion = "$env:VERSION"
-              $plugin.DownloadLinkInstall = "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip"
-              $plugin.DownloadLinkUpdate = "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip"
-              $plugin.DownloadLinkTesting = "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip"
-              break
-            }
-          }
-          $repoJson | ConvertTo-Json -Depth 10 | Set-Content -Path repo.json -Encoding utf8
-          Get-Content -Path repo.json
+          $rj = Get-Content -Path repo.json -Raw | ConvertFrom-Json
+          foreach ($p in $rj) { if ($p.InternalName -eq 'BeastMasterHelper') { $p.AssemblyVersion = $env:NEWVER; $p.DownloadLinkInstall = 'https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip'; $p.DownloadLinkUpdate = 'https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip'; $p.DownloadLinkTesting = 'https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip' } }
+          $rj | ConvertTo-Json -Depth 10 | Set-Content -Path repo.json -Encoding utf8
 
-      - name: Commit and push changes
+      - name: Commit and push
         shell: pwsh
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add version.txt version.props src/BeastMasterHelper/BeastMasterHelper.csproj plugins/BeastMasterHelper/BeastMasterHelper.zip repo.json
-          git commit -m "chore: auto-build v$env:VERSION [skip ci]" || echo "No changes to commit"
-          git push origin main || echo "Push failed (may already be up to date)"
+          git commit -m "chore: auto-build v$env:NEWVER [skip ci]" || true
+          git push origin main || true
