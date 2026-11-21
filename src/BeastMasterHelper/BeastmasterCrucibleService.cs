@@ -944,14 +944,42 @@ public sealed class BeastmasterCrucibleService : IDisposable {
 				wanted=list2.Take(num2).ToList();
 			}
 			else {
-				wanted=(from c in CrucibleBeastRank.LevelingCandidatesForCap(Enumerable.Range(1,50).Where(IsUnlockedFamiliar),configuration.CrucibleBeastRankLearned,configuration.CrucibleBeastRankFallback,configuration.CrucibleBeastExpLearned,num).Take(num2)
-					select c.CatalogueId).ToList();
+				wanted = new List<int>();
+			
+				List<(int catalogueId, int rank, int expPercent)> candidates = new List<(int, int, int)>();
+				for(int catalogueId = 1; catalogueId <= 50; catalogueId++) {
+					if(!IsUnlockedFamiliar(catalogueId)) continue;
+				
+					int? rank = CrucibleBeastRank.EffectiveRank(
+						configuration.CrucibleBeastRankLearned,
+						configuration.CrucibleBeastRankFallback,
+						catalogueId);
+				
+					int expPercent = 100;
+					if(rank.HasValue) {
+						uint monsterId = CrucibleBeastRank.MonsterIdFor(catalogueId);
+						if(configuration.CrucibleBeastRankLearned.ContainsKey(monsterId)) {
+							expPercent = configuration.CrucibleBeastExpLearned.GetValueOrDefault(monsterId, 100);
+						} else if(configuration.CrucibleBeastRankFallback.ContainsKey(catalogueId)) {
+							expPercent = configuration.CrucibleBeastExpLearned.GetValueOrDefault(monsterId, 100);
+						}
+					}
+				
+					candidates.Add((catalogueId, rank ?? 1, expPercent));
+				}
+			
+				wanted = candidates
+					.Where(c => c.rank < num || (c.rank == num && c.expPercent < 100))
+					.OrderBy(c => c.rank)
+					.ThenBy(c => c.catalogueId)
+					.Take(num2)
+					.Select(c => c.catalogueId)
+					.ToList();
 			}
 			if(!levelSuggested&&wanted.Count<num2) {
-				IEnumerable<int> collection=(from id in Enumerable.Range(1,50)
-					where !wanted.Contains(id)&&IsUnlockedFamiliar(id)&&CrucibleBeastRank.EffectiveRank(configuration.CrucibleBeastRankLearned,configuration.CrucibleBeastRankFallback,id).HasValue
-					orderby CrucibleBeastRank.EffectiveRank(configuration.CrucibleBeastRankLearned,configuration.CrucibleBeastRankFallback,id) descending,configuration.CrucibleBeastExpLearned.GetValueOrDefault(CrucibleBeastRank.MonsterIdFor(id)) descending,id
-					select id).Take(num2-wanted.Count);
+				IEnumerable<int> collection = Enumerable.Range(1, 50)
+					.Where(id => !wanted.Contains(id) && IsUnlockedFamiliar(id))
+					.Take(num2 - wanted.Count);
 				wanted.AddRange(collection);
 			}
 			int changeId=registered.OrderBy((int id) => id).FirstOrDefault((int id) => !wanted.Contains(id));
