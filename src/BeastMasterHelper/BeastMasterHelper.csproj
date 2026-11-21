@@ -12,7 +12,7 @@
 
     <!-- DalamudPackager manifest properties -->
     <Name>Beast Master Helper</Name>
-    <Author>Anmi (fork maintained by T3chnicalD3ath Inc.)</Author>
+    <Author>Anmi (fork maintained by xMaboo)</Author>
     <Punchline>Tracks Beastmaster job progress and your beast catalogue.</Punchline>
     <Description>Tracks the Beastmaster quest chain and beast-catalogue collection progress, auto-recording captures from chat and offering navigation to quest and catalogue targets. Works with vnavmesh for same-map travel and Lifestream for cross-map teleports. An English fork of Anmi's Beastmaster plugin.</Description>
     <ApplicableVersion>any</ApplicableVersion>
