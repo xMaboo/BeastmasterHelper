@@ -730,7 +730,7 @@ public sealed class BeastmasterCrucibleService : IDisposable {
 			int? num4=CrucibleBestiaryReader.ViewedExpPercent();
 			string name=new CrucibleBestiaryEntry(num,Selected: false,null).Name;
 			bool flag=name.Length==0||string.Equals(text,name,StringComparison.OrdinalIgnoreCase);
-			if(((num2==CrucibleBeastRank.MonsterIdFor(num))&flag)&&num3.HasValue) {
+			if(((num2==CrucibleBeastRank.MonsterIdFor(num)||num2==0)&&flag)&&num3.HasValue) {
 				int valueOrDefault=num3.GetValueOrDefault();
 				if(num4.HasValue) {
 					int valueOrDefault2=num4.GetValueOrDefault();
@@ -759,7 +759,7 @@ public sealed class BeastmasterCrucibleService : IDisposable {
 					return;
 				}
 			}
-			if(num2==CrucibleBeastRank.MonsterIdFor(num)&&(!num3.HasValue||!num4.HasValue)) {
+			if(!num3.HasValue||!num4.HasValue) {
 				if(scanSeen!=-1) {
 					scanSeen=-1;
 					scanSeenAt=DateTime.UtcNow;
@@ -995,10 +995,7 @@ public sealed class BeastmasterCrucibleService : IDisposable {
 			}
 			else if(changeId==0) {
 				if(wanted.Count==0) {
-					bool anyRanks=configuration.CrucibleBeastRankLearned.Count>0||configuration.CrucibleBeastRankFallback.Count>0;
-					Stop(anyRanks
-						?$"Level Up Beasts: every familiar is at this board's rank cap of {num} with a full exp bar, so nothing was selected."
-						:$"Level Up Beasts: no familiar ranks were read from the Bestiary. Open the Master's Bestiary and hover each familiar to read its rank before starting.");
+					Stop($"Level Up Beasts: every familiar is at this board's rank cap of {num} with a full exp bar, so nothing was selected.");
 					return;
 				}
 				changeId=wanted.FirstOrDefault((int id) => !registered.Contains(id));
