@@ -9,39 +9,79 @@
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+
+    <!-- DalamudPackager manifest properties -->
+    <Name>Beast Master Helper</Name>
+    <Author>Anmi (fork maintained by T3chnicalD3ath Inc.)</Author>
+    <Punchline>Tracks Beastmaster job progress and your beast catalogue.</Punchline>
+    <Description>Tracks the Beastmaster quest chain and beast-catalogue collection progress, auto-recording captures from chat and offering navigation to quest and catalogue targets. Works with vnavmesh for same-map travel and Lifestream for cross-map teleports. An English fork of Anmi's Beastmaster plugin.</Description>
+    <ApplicableVersion>any</ApplicableVersion>
+    <DalamudApiLevel>15</DalamudApiLevel>
+    <LoadRequiredState>0</LoadRequiredState>
+    <LoadSync>false</LoadSync>
+    <CanUnloadAsync>false</CanUnloadAsync>
+    <LoadPriority>0</LoadPriority>
+    <AcceptsFeedback>true</AcceptsFeedback>
+    <IconUrl>https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/icon.png</IconUrl>
+    <RepoUrl>https://github.com/xMaboo/BeastmasterHelper</RepoUrl>
+    <Tags>beastmaster;tracker;utility</Tags>
+    <CategoryTags>Utility</CategoryTags>
+    <Changelog>Fixed Level Up Beasts mode incorrectly reporting all familiars as at the board rank cap when rank data had not been read from the Bestiary.</Changelog>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="Dalamud">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\Dalamud.dll</HintPath>
+      <HintPath>lib\Dalamud.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Dalamud.Bindings.ImGui">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\Dalamud.Bindings.ImGui.dll</HintPath>
+      <HintPath>lib\Dalamud.Bindings.ImGui.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Dalamud.Bindings.ImGuizmo">
+      <HintPath>lib\Dalamud.Bindings.ImGuizmo.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Dalamud.Bindings.ImPlot">
+      <HintPath>lib\Dalamud.Bindings.ImPlot.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Dalamud.Common">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\Dalamud.Common.dll</HintPath>
+      <HintPath>lib\Dalamud.Common.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="FFXIVClientStructs">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\FFXIVClientStructs.dll</HintPath>
+      <HintPath>lib\FFXIVClientStructs.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="ImGuiScene">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\ImGuiScene.dll</HintPath>
+      <HintPath>lib\ImGuiScene.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="InteropGenerator.Runtime">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\InteropGenerator.Runtime.dll</HintPath>
+      <HintPath>lib\InteropGenerator.Runtime.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Lumina">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\Lumina.dll</HintPath>
+      <HintPath>lib\Lumina.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Lumina.Excel">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\Lumina.Excel.dll</HintPath>
+      <HintPath>lib\Lumina.Excel.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\Newtonsoft.Json.dll</HintPath>
+      <HintPath>lib\Newtonsoft.Json.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="TerraFX.Interop.Windows">
-      <HintPath>C:\Users\Matthew\AppData\Roaming\XIVLauncher\addon\Hooks\15.0.4.1\TerraFX.Interop.Windows.dll</HintPath>
+      <HintPath>lib\TerraFX.Interop.Windows.dll</HintPath>
+      <Private>true</Private>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DalamudPackager" Version="15.0.0" />
   </ItemGroup>
 
 </Project>

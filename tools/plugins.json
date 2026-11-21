@@ -44,7 +44,7 @@
     },
     {
       "internalName": "BeastMasterHelper",
-      "project": "../BeastMasterHelper/BeastMasterHelper.csproj",
+      "project": "src/BeastMasterHelper/BeastMasterHelper.csproj",
       "$comment": "English fork of Anmi's Beastmaster. Upstream states NO licence, so redistribution terms are unstated - published with prominent attribution and withdrawn on request. See ../BeastMasterHelper/NOTICE.md.",
       "fork": {
         "upstream": "https://github.com/anmili2022/Beastmaster",
