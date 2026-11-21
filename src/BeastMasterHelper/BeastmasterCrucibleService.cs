@@ -944,32 +944,16 @@ public sealed class BeastmasterCrucibleService : IDisposable {
 				wanted=list2.Take(num2).ToList();
 			}
 			else {
-				wanted = new List<int>();
-			
-				List<(int catalogueId, int rank, int expPercent)> candidates = new List<(int, int, int)>();
+				List<(int catalogueId, int rank)> candidates = new List<(int, int)>();
 				for(int catalogueId = 1; catalogueId <= 50; catalogueId++) {
 					if(!IsUnlockedFamiliar(catalogueId)) continue;
-				
 					int? rank = CrucibleBeastRank.EffectiveRank(
 						configuration.CrucibleBeastRankLearned,
 						configuration.CrucibleBeastRankFallback,
 						catalogueId);
-				
-					int expPercent = 100;
-					if(rank.HasValue) {
-						uint monsterId = CrucibleBeastRank.MonsterIdFor(catalogueId);
-						if(configuration.CrucibleBeastRankLearned.ContainsKey(monsterId)) {
-							expPercent = configuration.CrucibleBeastExpLearned.GetValueOrDefault(monsterId, 100);
-						} else if(configuration.CrucibleBeastRankFallback.ContainsKey(catalogueId)) {
-							expPercent = configuration.CrucibleBeastExpLearned.GetValueOrDefault(monsterId, 100);
-						}
-					}
-				
-					candidates.Add((catalogueId, rank ?? 1, expPercent));
+					candidates.Add((catalogueId, rank ?? 1));
 				}
-			
 				wanted = candidates
-					.Where(c => c.rank < num || (c.rank == num && c.expPercent < 100))
 					.OrderBy(c => c.rank)
 					.ThenBy(c => c.catalogueId)
 					.Take(num2)
