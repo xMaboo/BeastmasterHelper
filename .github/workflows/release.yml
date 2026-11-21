@@ -1,92 +1,121 @@
-name: Build and Release BeastMasterHelper
+    name: Build and Release BeastMasterHelper
 
-on:
-  push:
-    tags:
-      - 'BeastMasterHelper-v*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Release tag (e.g. BeastMasterHelper-v0.10.5.2)'
-        required: true
-        default: 'BeastMasterHelper-v0.10.5.2'
+    on:
+      push:
+        branches:
+          - main
 
-permissions:
-  contents: write
+    permissions:
+      contents: write
 
-concurrency:
-  group: release
-  cancel-in-progress: false
+    jobs:
+      build-and-release:
+        runs-on: windows-latest
+        steps:
+          - name: Checkout repository
+            uses: actions/checkout@v4
+            with:
+              token: ${{ secrets.GITHUB_TOKEN }}
+              fetch-depth: 0
 
-jobs:
-  build-and-release:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+          - name: Setup .NET
+            uses: actions/setup-dotnet@v4
+            with:
+              dotnet-version: '10.0.x'
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
+          - name: Read and increment version
+            shell: pwsh
+            run: |
+              $versionFile = "version.txt"
+              $current = Get-Content $versionFile
+              $parts = $current -split '\.'
+              $major = $parts[0]
+              $minor = $parts[1]
+              $patch = $parts[2]
+              $build = [int]$parts[3] + 1
+              $newVersion = "$major.$minor.$patch.$build"
+              Set-Content -Path $versionFile -Value $newVersion
+              echo "VERSION=$newVersion" >> $env:GITHUB_ENV
+              echo "New version: $newVersion"
 
-      - name: Build plugin
-        shell: pwsh
-        run: |
-          dotnet build src/BeastMasterHelper/BeastMasterHelper.csproj -c Release `
-            -p:ContinuousIntegrationBuild=true `
-            --nologo -v quiet
+          - name: Generate version.props
+            shell: pwsh
+            run: |
+              @"
+<Project>
+  <PropertyGroup>
+    <Version>$env:VERSION</Version>
+    <AssemblyVersion>$env:VERSION</AssemblyVersion>
+    <FileVersion>$env:VERSION</FileVersion>
+    <InformationalVersion>$env:VERSION</InformationalVersion>
+  </PropertyGroup>
+</Project>
+"@ | Out-File -FilePath "version.props" -Encoding utf8
+            Get-Content version.props
 
-      - name: Stage release zip with correct asset name
-        shell: pwsh
-        run: |
-          $zipPath = Join-Path (Resolve-Path 'src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper') 'latest.zip'
-          if (-not (Test-Path $zipPath)) {
-            Write-Error "Packaged zip not found at $zipPath"
-            exit 1
-          }
-          $stageDir = Join-Path $env:RUNNER_TEMP 'stage'
-          New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
-          $assetName = "BeastMasterHelper.zip"
-          $dest = Join-Path $stageDir $assetName
-          Copy-Item -Path $zipPath -Destination $dest -Force
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $archive = [System.IO.Compression.ZipFile]::Open($dest, 'Update')
-          try {
-            $toRemove = @()
-            foreach ($entry in $archive.Entries) {
-              if ($entry.Name -like '*.pdb') {
-                $toRemove += $entry.FullName
+          - name: Build plugin
+            shell: pwsh
+            run: |
+              dotnet build src/BeastMasterHelper/BeastMasterHelper.csproj -c Release `
+                -p:ContinuousIntegrationBuild=true `
+                --nologo -v quiet
+
+          - name: Strip PDBs from packaged zip
+            shell: pwsh
+            run: |
+              $zipPath = Join-Path (Resolve-Path 'src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper') 'latest.zip'
+              if (-not (Test-Path $zipPath)) {
+                Write-Error "Packaged zip not found at $zipPath"
+                exit 1
               }
-            }
-            foreach ($name in $toRemove) {
-              $archive.GetEntry($name).Delete()
-              Write-Host "Removed PDB: $name"
-            }
-          } finally {
-            $archive.Dispose()
-          }
-          Write-Host "Staged asset: $dest"
-          echo "ASSET_PATH=$dest" >> $env:GITHUB_ENV
-          echo "ASSET_NAME=$assetName" >> $env:GITHUB_ENV
+              $tmpPath = $zipPath + '.tmp'
+              Add-Type -AssemblyName System.IO.Compression.FileSystem
+              $archive = [System.IO.Compression.ZipFile]::Open($zipPath, 'Update')
+              try {
+                $toRemove = @()
+                foreach ($entry in $archive.Entries) {
+                  if ($entry.Name -like '*.pdb') {
+                    $toRemove += $entry.FullName
+                  }
+                }
+                foreach ($name in $toRemove) {
+                  $archive.GetEntry($name).Delete()
+                  Write-Host "Removed PDB: $name"
+                }
+              } finally {
+                $archive.Dispose()
+              }
+              Write-Host "PDBs stripped from $zipPath"
 
-      - name: Determine tag and asset name
-        shell: pwsh
-        run: |
-          $tag = "${{ github.ref_name }}"
-          if ($tag -eq "") {
-            $tag = "${{ github.event.inputs.tag }}"
-          }
-          Write-Host "Tag: $tag"
-          echo "RELEASE_TAG=$tag" >> $env:GITHUB_ENV
-          echo "ASSET_NAME=BeastMasterHelper.zip" >> $env:GITHUB_ENV
+          - name: Copy packaged zip to plugins folder
+            shell: pwsh
+            run: |
+              $src = Join-Path (Resolve-Path 'src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper') 'latest.zip'
+              $dest = Join-Path (Resolve-Path 'plugins/BeastMasterHelper') 'BeastMasterHelper.zip'
+              Copy-Item -Path $src -Destination $dest -Force
+              Write-Host "Zip copied to plugins/BeastMasterHelper/BeastMasterHelper.zip"
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: BeastMasterHelper ${{ env.RELEASE_TAG }}
-          files: ${{ env.ASSET_PATH }}
-          draft: false
-          prerelease: false
-          generate_release_notes: false
+          - name: Update repo.json with new version
+            shell: pwsh
+            run: |
+              $repoJson = Get-Content -Path repo.json -Raw | ConvertFrom-Json
+              foreach ($plugin in $repoJson) {
+                if ($plugin.InternalName -eq 'BeastMasterHelper') {
+                  $plugin.AssemblyVersion = "$env:VERSION"
+                  $plugin.DownloadLinkInstall = "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip"
+                  $plugin.DownloadLinkUpdate = "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip"
+                  $plugin.DownloadLinkTesting = "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip"
+                  break
+                }
+              }
+              $repoJson | ConvertTo-Json -Depth 10 | Set-Content -Path repo.json -Encoding utf8
+              Get-Content -Path repo.json
+
+          - name: Commit and push changes
+            shell: pwsh
+            run: |
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add version.txt version.props src/BeastMasterHelper/BeastMasterHelper.csproj plugins/BeastMasterHelper/BeastMasterHelper.zip repo.json
+              git commit -m "chore: auto-build v$env:VERSION [skip ci]" || echo "No changes to commit"
+              git push origin main || echo "Push failed (may already be up to date)"

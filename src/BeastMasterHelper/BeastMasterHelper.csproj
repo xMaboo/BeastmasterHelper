@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Import Project="version.props" Condition="Exists('version.props')" />
     <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>BeastMasterHelper</AssemblyName>
     <RootNamespace>Beastmaster</RootNamespace>
@@ -9,8 +10,6 @@
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <AssemblyVersion>0.10.5.4</AssemblyVersion>
-    <Version>0.10.5.4</Version>
 
     <!-- DalamudPackager manifest properties -->
     <Name>Beast Master Helper</Name>
