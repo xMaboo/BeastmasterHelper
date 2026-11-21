@@ -730,7 +730,7 @@ public sealed class BeastmasterCrucibleService : IDisposable {
 			int? num4=CrucibleBestiaryReader.ViewedExpPercent();
 			string name=new CrucibleBestiaryEntry(num,Selected: false,null).Name;
 			bool flag=name.Length==0||string.Equals(text,name,StringComparison.OrdinalIgnoreCase);
-			if(((num2==CrucibleBeastRank.MonsterIdFor(num)||num2==0)&&flag)&&num3.HasValue) {
+			if(num3.HasValue) {
 				int valueOrDefault=num3.GetValueOrDefault();
 				if(num4.HasValue) {
 					int valueOrDefault2=num4.GetValueOrDefault();
