@@ -58,10 +58,15 @@ public sealed class BeastmasterGaugeSnapshot {
 		if(DalamudApi.PlayerState.ClassJob.RowId!=43) {
 			return Unavailable("Current job is not Beastmaster");
 		}
-		JobGaugeManager* ptr=JobGaugeManager.Instance();
-		if(ptr==null) {
-			return Unavailable("JobGaugeManager.Instance() unavailable");
-		}
+		JobGaugeManager* ptr;
+			try {
+				ptr=JobGaugeManager.Instance();
+			} catch {
+				return Unavailable("JobGaugeManager address not resolved for this game version");
+			}
+			if(ptr==null) {
+				return Unavailable("JobGaugeManager.Instance() unavailable");
+			}
 		byte[] array=new byte[48];
 		nint num=(nint)(&ptr->CurrentGauge);
 		byte* ptr2=(byte*)num;
