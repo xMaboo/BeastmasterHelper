@@ -9,6 +9,7 @@
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <AssemblyVersion>0.10.5.2</AssemblyVersion>
 
     <!-- DalamudPackager manifest properties -->
     <Name>Beast Master Helper</Name>
