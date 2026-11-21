@@ -34,7 +34,7 @@
     "IconUrl": "https://raw.githubusercontent.com/t3knical/DalamudPlugins/main/plugins/BardPerformanceHelper/icon.png"
   },
   {
-    "Author": "Anmi (fork maintained by T3chnicalD3ath Inc.)",
+    "Author": "Anmi (fork maintained by xMaboo)",
     "Name": "Beast Master Helper",
     "InternalName": "BeastMasterHelper",
     "AssemblyVersion": "0.10.5.2",
@@ -59,9 +59,9 @@
     "IsTestingExclusive": false,
     "DownloadCount": 357,
     "LastUpdate": 1791582449,
-    "DownloadLinkInstall": "https://github.com/xMaboo/BeastmasterHelper/releases/download/BeastMasterHelper-v0.10.5.2/BeastMasterHelper.zip",
-    "DownloadLinkUpdate": "https://github.com/xMaboo/BeastmasterHelper/releases/download/BeastMasterHelper-v0.10.5.2/BeastMasterHelper.zip",
-    "DownloadLinkTesting": "https://github.com/xMaboo/BeastmasterHelper/releases/download/BeastMasterHelper-v0.10.5.2/BeastMasterHelper.zip",
+    "DownloadLinkInstall": "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip",
+    "DownloadLinkUpdate": "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip",
+    "DownloadLinkTesting": "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/BeastMasterHelper.zip",
     "RepoUrl": "https://github.com/xMaboo/BeastmasterHelper",
     "IconUrl": "https://raw.githubusercontent.com/xMaboo/BeastmasterHelper/main/plugins/BeastMasterHelper/icon.png"
   },
