@@ -37,7 +37,7 @@ jobs:
             -p:ContinuousIntegrationBuild=true `
             --nologo -v quiet
 
-      - name: Strip PDBs from packaged zip
+      - name: Stage release zip with correct asset name
         shell: pwsh
         run: |
           $zipPath = Join-Path (Resolve-Path 'src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper') 'latest.zip'
@@ -45,9 +45,13 @@ jobs:
             Write-Error "Packaged zip not found at $zipPath"
             exit 1
           }
-          $tmpPath = $zipPath + '.tmp'
+          $stageDir = Join-Path $env:RUNNER_TEMP 'stage'
+          New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
+          $assetName = "BeastMasterHelper.zip"
+          $dest = Join-Path $stageDir $assetName
+          Copy-Item -Path $zipPath -Destination $dest -Force
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $archive = [System.IO.Compression.ZipFile]::Open($zipPath, 'Update')
+          $archive = [System.IO.Compression.ZipFile]::Open($dest, 'Update')
           try {
             $toRemove = @()
             foreach ($entry in $archive.Entries) {
@@ -62,7 +66,9 @@ jobs:
           } finally {
             $archive.Dispose()
           }
-          Write-Host "PDBs stripped from $zipPath"
+          Write-Host "Staged asset: $dest"
+          echo "ASSET_PATH=$dest" >> $env:GITHUB_ENV
+          echo "ASSET_NAME=$assetName" >> $env:GITHUB_ENV
 
       - name: Determine tag and asset name
         shell: pwsh
@@ -80,7 +86,7 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: BeastMasterHelper ${{ env.RELEASE_TAG }}
-          files: src/BeastMasterHelper/bin/Release/net10.0-windows/BeastMasterHelper/latest.zip
+          files: ${{ env.ASSET_PATH }}
           draft: false
           prerelease: false
           generate_release_notes: false
